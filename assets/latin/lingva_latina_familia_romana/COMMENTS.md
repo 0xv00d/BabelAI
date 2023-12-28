@@ -1,0 +1,2 @@
+`cap1_pars3.txt` contains almost exlusively meta information about constituents of the language.
+Currently, I don't feel like going down the rabbithole of how to make the AI "think logically" to make inference possible, and it is outside the scope of NLP as well, so I'm leaving that chapter out entirely from the input.

@@ -16,3 +16,7 @@ Installing Zig through `winget` doesn't work. Instead you should download the zi
 ## Running the project
 
 In the root folder of the project, execute `zig build run`.
+
+## Running tests
+
+In the root folder of the project, execute `zig build test`.

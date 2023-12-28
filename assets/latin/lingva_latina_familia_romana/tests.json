@@ -1,0 +1,11 @@
+{
+    "grammar": [
+        "cap1_pensum_a.json"
+    ],
+    "vocabulary": [
+        "cap1_pensum_b.json"
+    ],
+    "qna": [
+        "cap1_pensum_c.json"
+    ]
+}

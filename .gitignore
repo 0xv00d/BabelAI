@@ -1,2 +1,8 @@
+# Generated on "zig build"
 zig-cache
 zig-out
+
+# Ignore all text and json files that follow this pattern as this pattern
+# is used for files containing text from commercialized sources.
+**/assets/**/cap?_pars?.txt
+**/assets/**/cap?_pensum_?.json
