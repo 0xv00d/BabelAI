@@ -1,5 +1,5 @@
 const std = @import("std");
-const asset_utils = @import("assets_utils.zig");
+const aus = @import("assets_utils.zig");
 
 fn read(file: *const std.fs.File) !void {
     var buf_reader = std.io.bufferedReader(file.*.reader());
@@ -23,7 +23,7 @@ fn containsText(haystack: [][]const u8, needle: []const u8) bool {
 
 fn extractTextFiles(
     collection: *std.fs.Dir,
-    exclusions: *const asset_utils.ExclusionsFileData,
+    exclusions: *const aus.ExclusionsFileData,
     allocator : *const std.mem.Allocator
 ) !std.ArrayList(std.fs.File) {
     var text_files = std.ArrayList(std.fs.File).init(allocator.*);
@@ -49,15 +49,15 @@ fn processCollection(collection: *std.fs.Dir) !void {
     var   gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer std.debug.assert(gpa.deinit() == .ok);
 
-    const exclusions_file = try collection.*.openFile(asset_utils.EXCLUSIONS_JSON, .{});
+    const exclusions_file = try collection.*.openFile(aus.EXCLUSIONS_JSON, .{});
     defer exclusions_file.close();
-    const exclusions = try asset_utils.getExclusionsFileData(&exclusions_file, gpa.allocator());
+    const exclusions = try aus.parseJsonFromFile(aus.ExclusionsFileData, &exclusions_file, gpa.allocator());
     defer exclusions.deinit();
 
-    const      tests_file = try collection.*.openFile(asset_utils.     TESTS_JSON, .{});
-    defer      tests_file.close();
-    const      tests = try asset_utils.getTestsFileData          (&tests_file, gpa.allocator());
-    defer      tests.deinit();
+    const tests_file = try collection.*.openFile(aus.TESTS_JSON, .{});
+    defer tests_file.close();
+    const tests = try aus.parseJsonFromFile(aus.TestsFileData, &tests_file, gpa.allocator());
+    defer tests.deinit();
 
     var   arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -74,7 +74,7 @@ fn processCollection(collection: *std.fs.Dir) !void {
 }
 
 pub fn instantiateLatinModule() !void {
-    var assets_dir = try std.fs.cwd().openDir(asset_utils.ASSETS_FOLDER, .{ .iterate = true });
+    var assets_dir = try std.fs.cwd().openDir(aus.ASSETS_FOLDER, .{ .iterate = true });
     defer assets_dir.close();
 
     var it = assets_dir.iterateAssumeFirstIteration();

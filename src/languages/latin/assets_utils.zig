@@ -7,46 +7,56 @@ pub const EXCLUSIONS_JSON = "exclusions.json";
 pub const TestsFileData = struct { grammar: [][]u8, vocabulary: [][]u8, qna: [][]u8 };
 pub const ExclusionsFileData = [][]u8;
 
-const BabelError = error{JsonReadError};
+const BabelJsonError = error{ ReadError, ParseError };
+
 fn readJsonFromFile(
     file: *const std.fs.File,
     buffer: *const []u8
-) !void {
-    const read_size = try file.*.readAll(buffer.*);
+) BabelJsonError!usize {
+    const read_size = file.*.readAll(buffer.*)
+        catch |err| {
+            std.debug.print("[LATIN ASSET UTILS] @readJsonFromFile v\n", .{});
+            switch (err) {
+                std.os.ReadError.AccessDenied    => { std.debug.print("Insufficient file permissions.", .{}); },
+                std.os.ReadError.SystemResources => { std.debug.print("Insufficient system resources.", .{}); },
+                else => { std.debug.print("Error {d}.", .{@errorName(err)}); }
+            }
+            return BabelJsonError.ReadError;
+        };
 
-    const file_stats = try file.*.stat();
-    if (read_size != file_stats.size) return BabelError.JsonReadError;
-
-    return;
+    return read_size;
 }
 
-// Use generics for this.
-pub fn getExclusionsFileData(
+pub fn parseJsonFromFile(
+    comptime T: type,
     file: *const std.fs.File,
     allocator: std.mem.Allocator
-) !std.json.Parsed(ExclusionsFileData) {
-    const file_stats = try file.*.stat();
+) BabelJsonError!std.json.Parsed(T) {
+    const file_stats = file.*.stat()
+        catch |err| {
+            std.debug.print("[LATIN ASSET UTILS] @parseJsonFromFile v\n", .{});
+            switch (err) {
+                std.os.FStatError.AccessDenied    => { std.debug.print("Insufficient file permissions.", .{}); },
+                std.os.FStatError.SystemResources => { std.debug.print("Insufficient system resources.", .{}); },
+                else => { std.debug.print("Error {d}.", .{@errorName(err)}); }
+            }
+            return BabelJsonError.ReadError;
+        };
 
-    const json = try allocator.alloc(u8, file_stats.size);
+    const json = allocator.alloc(u8, file_stats.size)
+        catch |err| {
+            std.debug.print("[LATIN ASSET UTILS] @parseJsonFromFile ${s}.\n", .{@errorName(err)});
+            return BabelJsonError.ReadError;
+        };
     defer allocator.free(json);
 
-    try readJsonFromFile(file, &json);
+    if (try readJsonFromFile(file, &json) != file_stats.size) return BabelJsonError.ReadError;
 
-    const exclusions = try std.json.parseFromSlice(ExclusionsFileData, allocator, json, .{});
-    return exclusions;
-}
+    const parsed = std.json.parseFromSlice(T, allocator, json, .{})
+        catch |err| {
+            std.debug.print("[LATIN ASSET UTILS] @parseJsonFromFile: ${s}.\n", .{@errorName(err)});
+            return BabelJsonError.ParseError;
+        };
 
-pub fn getTestsFileData(
-    file: *const std.fs.File,
-    allocator: std.mem.Allocator
-) !std.json.Parsed(TestsFileData) {
-    const file_stats = try file.*.stat();
-
-    const json = try allocator.alloc(u8, file_stats.size);
-    defer allocator.free(json);
-
-    try readJsonFromFile(file, &json);
-
-    const tests = try std.json.parseFromSlice(TestsFileData, allocator, json, .{});
-    return tests;
+    return parsed;
 }

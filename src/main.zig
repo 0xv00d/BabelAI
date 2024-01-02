@@ -2,8 +2,9 @@ const std = @import("std");
 const latin = @import("latin");
 
 pub fn main() !void {
-    //// Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    //std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+    // Letting UTF-8 get printed to Windows cmd.
+    _ = std.os.windows.kernel32.SetConsoleOutputCP(65001);
+
     try latin.instantiateLatinModule();
 }
 
